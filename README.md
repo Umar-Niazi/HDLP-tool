@@ -1,9 +1,3 @@
-My apologies for the confusion. I misunderstood your request.
-
-Here is the raw Markdown content. You can copy this entire text block and paste it directly into your `README.md` file.
-
------
-
 # HDLP (Hash-Based Data Loss Prevention)
 
 A lightweight Python tool that monitors file changes, hashes them using SHA3-256, and compares them against a database of known sensitive file hashes. Alerts are triggered when matches are found, with an optional dashboard for viewing and management.
