@@ -1,0 +1,24 @@
+# Byte‑compiled / optimized files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Database
+hash_store.db
+
+# Logs
+logs/
+*.log
+
+# Environment files
+*.env
+
+# Virtual environments
+venv/
+env/
+
+# Shell history
+*.sh~
+
+# OS files
+.DS_Store
