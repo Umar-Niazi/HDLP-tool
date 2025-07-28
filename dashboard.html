@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hash-Based DLP - Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+<header>
+    <h1>Hash-Based Data Loss Prevention (DLP) - Dashboard</h1>
+</header>
+
+<nav>
+    <ul>
+        <li><a href="/">Dashboard</a></li>
+        <li><a href="#upload-section">Upload File</a></li>
+        <li><a href="#alerts-section">View Alerts</a></li>
+    </ul>
+</nav>
+
+<main>
+
+    <!-- Upload File Section -->
+    <section id="upload-section" class="section">
+        <h2>Upload a File</h2>
+        <form action="/" method="POST" enctype="multipart/form-data">
+            <label>Select File:</label>
+            <input type="file" name="file" required>
+            <label>Select Directory to Store the File:</label>
+            <select name="directory" required>
+                <option value="">Select Directory</option>
+                {% for d in directories %}
+                    <option value="{{ d }}">{{ d }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit">Upload File</button>
+        </form>
+    </section>
+
+    <!-- Sensitive Files Section -->
+    <section class="section">
+        <h2>Total Sensitive Files</h2>
+        <p>Total Files: {{ total_hashes }}</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>File Name</th>
+                    <th>Hash Type</th>
+                    <th>Hash Value</th>
+                    <th>File Path</th>
+                    <th>Created At</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for hash in hashes %}
+                <tr>
+                    <td>{{ hash[3] }}</td>
+                    <td>{{ hash[2] }}</td>
+                    <td>{{ hash[1] }}</td>
+                    <td>{{ hash[4] }}</td>
+                    <td>{{ hash[5] }}</td>
+                    <td><a href="/delete/{{ hash[0] }}" class="delete-btn">Delete</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+
+    <!-- Live Alerts Section -->
+    <section id="alerts-section" class="section">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2>Recent Alerts (Live)</h2>
+            <button id="clear-alerts-btn" class="danger-btn">Clear All Alerts</button>
+        </div>
+        <div id="alerts-scroll" class="alert-scroll">
+            <table id="alerts-table">
+                <thead>
+                    <tr><th>Alert Message</th></tr>
+                </thead>
+                <tbody id="alerts-body">
+                    <tr><td>Loading alerts...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+</main>
+
+<script>
+    async function fetchAlerts() {
+        try {
+            const res = await fetch('/get_alerts');
+            const alerts = await res.json();
+            const body = document.getElementById('alerts-body');
+            body.innerHTML = "";
+
+            if (alerts.length === 0) {
+                body.innerHTML = "<tr><td>No alerts yet.</td></tr>";
+            } else {
+                alerts.forEach(alert => {
+                    const row = document.createElement('tr');
+                    const cell = document.createElement('td');
+                    cell.textContent = alert;
+                    cell.style.whiteSpace = 'pre-wrap';
+                    row.appendChild(cell);
+                    body.appendChild(row);
+                });
+            }
+        } catch (err) {
+            console.error("Failed to load alerts:", err);
+        }
+    }
+
+    document.getElementById("clear-alerts-btn").addEventListener("click", async () => {
+        const confirmClear = confirm("Are you sure you want to clear all alerts?");
+        if (!confirmClear) return;
+
+        const res = await fetch('/clear_alerts', { method: 'POST' });
+        const json = await res.json();
+        if (json.status === "cleared") {
+            fetchAlerts();
+        }
+    });
+
+    fetchAlerts();
+    setInterval(fetchAlerts, 5000);
+</script>
+</body>
+</html>
