@@ -9,7 +9,7 @@ A lightweight Python tool that monitors file changes, hashes them using SHA3-256
 ### 1\. Clone the Repository
 
 ```bash
-git clone https://github.com/<your-username>/HDLP.git
+git clone https://github.com/Umar-Niazi/HDLP-tool
 cd HDLP
 ```
 
