@@ -1,0 +1,148 @@
+body {
+  font-family: 'Segoe UI', sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f8fbfd;
+  color: #222;
+}
+
+header {
+  background-color: #005b96;
+  color: white;
+  padding: 20px;
+  text-align: center;
+}
+
+nav {
+  background-color: #f4f6f9;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+nav ul {
+  margin: 0;
+  padding: 10px 20px;
+  display: flex;
+  list-style-type: none;
+  gap: 20px;
+}
+
+nav ul li a {
+  text-decoration: none;
+  color: #005b96;
+  font-weight: bold;
+}
+
+nav ul li a:hover {
+  text-decoration: underline;
+}
+
+main {
+  padding: 30px;
+  max-width: 1200px;
+  margin: auto;
+}
+
+.section {
+  background: white;
+  padding: 20px;
+  margin-bottom: 30px;
+  border-radius: 8px;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.05);
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+form label {
+  font-weight: bold;
+}
+
+form input[type="file"],
+form select {
+  width: 300px;
+}
+
+button {
+  background-color: #005b96;
+  border: none;
+  color: white;
+  padding: 10px 16px;
+  font-size: 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  width: fit-content;
+}
+
+button:hover {
+  background-color: #004270;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+table, th, td {
+  border: 1px solid #ddd;
+}
+
+th, td {
+  padding: 8px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  background-color: #f1f1f1;
+}
+
+.delete-btn {
+  color: #d11a2a;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.delete-btn:hover {
+  text-decoration: underline;
+}
+
+.danger-btn {
+  background-color: #d11a2a;
+  color: white;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.danger-btn:hover {
+  background-color: #a30d1e;
+}
+
+.alert-scroll {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff7f7;
+  box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
+}
+
+#alerts-table th {
+  background-color: #ffe6e6;
+  color: #cc0000;
+}
+
+#alerts-table td {
+  background-color: #fffafa;
+  color: #333;
+  font-family: monospace;
+  font-size: 14px;
+  padding: 10px;
+  border-bottom: 1px solid #f2dcdc;
+}
