@@ -51,6 +51,26 @@ Open your browser and go to:
 http://localhost:5000
 ```
 
+### 5. Uninstall / Cleanup
+
+If you need to remove everything (virtualenv, logs, database, and the project folder itself), use the new `uninstall.sh`:
+
+```bash
+chmod +x uninstall.sh
+./uninstall.sh        # interactive Y/N prompt
+./uninstall.sh -y     # skip prompt and delete immediately
+./uninstall.sh --yes  # same as -y
+```
+
+The script will:
+
+1. Stop any running `main.py` or `watch_alerts.py` processes
+2. Remove the `hdlp-venv` directory, `logs/`, and `hash_store.db`
+3. Verify marker files to ensure you’re deleting the correct folder
+4. Prompt you (Y/N) one last time
+5. Delete the entire project directory, including itself
+
+
 -----
 
 ## Requirements
@@ -92,18 +112,6 @@ HDLP/
 └── templates/
     └── dashboard.html    # Flask dashboard template
 ```
-
------
-
-## Contributing
-
-1.  Fork this repository
-2.  Create a new branch: `git checkout -b feature/YourFeature`
-3.  Make your changes and commit: `git commit -m "Add YourFeature"`
-4.  Push to your fork: `git push origin feature/YourFeature`
-5.  Open a Pull Request
-
------
 
 ## License
 
