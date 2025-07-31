@@ -4,9 +4,11 @@ IFS=$'\n\t'
 
 # === CONFIG ===
 PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
-VENV_DIR="$PROJECT_DIR/hdlp-venv"
+VENV_DIR="$PROJECT_DIR/dlp-venv"
 LOG_DIR="$PROJECT_DIR/logs"
 ALERT_LOG="$LOG_DIR/alerts_log.txt"
+FLASK_HOST="0.0.0.0"
+FLASK_PORT="5000"
 
 die() { echo "[ERROR] $*" >&2; exit 1; }
 
@@ -19,22 +21,21 @@ else
   die "Virtualenv not found—did you run setup_env.sh?"
 fi
 
-# 2. Clear old alerts log (but keep other logs)
-echo "[*] Resetting alerts log…"
+# 2. Reset alerts log only
+echo "[*] Clearing alerts log…"
 > "$ALERT_LOG"
 
-# 3. Launch services
-echo "[*] Starting Flask…"
-python3 main.py >> "$LOG_DIR/flask.log" 2>&1 &
-FLASK_PID=$!
+# 3. Launch Flask (which now also starts the watcher)
+echo "[*] Starting Flask + Watcher…"
+python3 app.py >> "$LOG_DIR/flask.log" 2>&1 &
+APP_PID=$!
 
-echo "[*] Starting Watchdog…"
-python3 watch_alerts.py >> "$LOG_DIR/watchdog.log" 2>&1 &
-WATCHDOG_PID=$!
+# 3a. Tell user where Flask is hosted
+echo "[*] Flask app is now listening on http://${FLASK_HOST}:${FLASK_PORT}/"
 
-# 4. Graceful shutdown
-trap 'echo "[*] Shutting down…"; kill $FLASK_PID $WATCHDOG_PID; exit 0' SIGINT SIGTERM
+# 4. Trap for graceful shutdown
+trap 'echo "[*] Shutting down…"; kill $APP_PID; exit 0' SIGINT SIGTERM
 
-echo "[✔] Services running. PIDs: Flask=$FLASK_PID, Watchdog=$WATCHDOG_PID"
+echo "[✔] Service running. PID: $APP_PID"
 echo "    Press Ctrl+C to stop."
 wait

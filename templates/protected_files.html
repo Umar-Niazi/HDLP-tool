@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Protected Files | DLP System</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔒</text></svg>">
+</head>
+<body>
+  <header>
+    <h1>Protected Files</h1>
+    <p>Data Leak Prevention System</p>
+  </header>
+  
+  <nav>
+    <ul>
+      <li><a href="/">Dashboard</a></li>
+      <li><a class="active" href="/protected_files">Protected Files</a></li>
+      <li><a href="/alerts">Alerts</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <section>
+      <div class="section-header">
+        <h2>All Protected Files <span class="badge">{{ total_hashes }}</span></h2>
+        <div class="section-actions">
+          <button onclick="window.location.reload()">
+            <span class="btn-icon">🔄</span> Refresh
+          </button>
+          <button onclick="exportToCSV()">
+            <span class="btn-icon">📥</span> Export CSV
+          </button>
+        </div>
+      </div>
+      
+      {% if hashes %}
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Filename</th>
+                <th>Type</th>
+                <th>Hash</th>
+                <th>Directory</th>
+                <th>Created</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for h in hashes %}
+              <tr>
+                <td>{{ h.filename }}</td>
+                <td>{{ h.hash_type }}</td>
+                <td class="hash-value-full">{{ h.hash_value }}</td>
+                <td>{{ h.allowed_directory }}</td>
+                <td>
+                  {% if h.created_at %}
+                    {{ h.created_at.strftime('%Y-%m-%d %H:%M') }}
+                  {% else %}
+                    Unknown
+                  {% endif %}
+                </td>
+                <td>
+                  <a href="{{ url_for('delete', id_=h.id) }}" class="delete-badge" 
+                     onclick="return confirm('Are you sure you want to remove protection for this file?')">
+                    Remove
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-icon">📁</div>
+          <h3>No Protected Files</h3>
+          <p>No files are currently being monitored by the DLP system.</p>
+          <a href="/" class="btn-primary">Upload First File</a>
+        </div>
+      {% endif %}
+    </section>
+  </main>
+
+  <footer>
+    <p>DLP System v1.0 | Securing sensitive documents with {{ config.HASH_TYPE|upper }} hashing</p>
+    <p>Active monitoring: <span id="home-dir">{{ config.HOME_DIR }}</span></p>
+  </footer>
+
+  <script>
+    function exportToCSV() {
+      // Create CSV content
+      let csvContent = "Filename,Type,Hash,Directory,Created\n";
+      
+      // Add rows
+      {% for h in hashes %}
+        csvContent += `"{{ h.filename }}","{{ h.hash_type }}","{{ h.hash_value }}","{{ h.allowed_directory }}","{{ h.created_at.strftime('%Y-%m-%d %H:%M') if h.created_at else 'Unknown' }}"\n`;
+      {% endfor %}
+      
+      // Create download link
+      const encodedUri = encodeURI("data:text/csv;charset=utf-8," + csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "protected_files.csv");
+      document.body.appendChild(link);
+      
+      // Trigger download
+      link.click();
+      document.body.removeChild(link);
+    }
+  </script>
+</body>
+</html>

@@ -1,130 +1,341 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Hash-Based DLP - Dashboard</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DLP Dashboard | Hash-Based Data Leak Prevention</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔒</text></svg>">
 </head>
 <body>
-<header>
-    <h1>Hash-Based Data Loss Prevention (DLP) - Dashboard</h1>
-</header>
-
-<nav>
+  <header>
+    <h1>Hash‑Based DLP</h1>
+    <p>Data Leak Prevention System</p>
+  </header>
+  
+  <nav>
     <ul>
-        <li><a href="/">Dashboard</a></li>
-        <li><a href="#upload-section">Upload File</a></li>
-        <li><a href="#alerts-section">View Alerts</a></li>
+      <li><a href="/">Dashboard</a></li>
+      <li><a href="/protected_files">Protected Files</a></li>
+      <li><a href="/alerts">Alerts</a></li>
     </ul>
-</nav>
+  </nav>
 
-<main>
+  <main>
+    <!-- Upload Section -->
+    <section id="upload-section">
+      <h2>Upload Sensitive File</h2>
+      <form method="POST" enctype="multipart/form-data" id="upload-form">
+        <div class="form-group">
+          <label for="file-input">Select File:</label>
+          <div class="file-input-container">
+            <input type="file" name="file" id="file-input" required accept="{{ config.ALLOWED_EXTENSIONS|join(',') }}">
+            <label for="file-input" class="file-input-label">
+              <span id="file-name">Choose a file...</span>
+              <span class="browse-btn">Browse</span>
+            </label>
+          </div>
+        </div>
 
-    <!-- Upload File Section -->
-    <section id="upload-section" class="section">
-        <h2>Upload a File</h2>
-        <form action="/" method="POST" enctype="multipart/form-data">
-            <label>Select File:</label>
-            <input type="file" name="file" required>
-            <label>Select Directory to Store the File:</label>
-            <select name="directory" required>
-                <option value="">Select Directory</option>
-                {% for d in directories %}
-                    <option value="{{ d }}">{{ d }}</option>
-                {% endfor %}
-            </select>
-            <button type="submit">Upload File</button>
-        </form>
+        <div class="form-group">
+          <label>Select Target Directory:</label>
+          <div id="dir-browser" class="directory-browser"></div>
+          <div id="selected-display" class="selected-directory">No directory selected</div>
+          <input type="hidden" name="selected_directory" id="selected-directory-input">
+        </div>
+
+        <button type="submit" id="upload-btn">
+          <span class="btn-icon">📤</span> Upload & Secure File
+        </button>
+      </form>
     </section>
 
-    <!-- Sensitive Files Section -->
-    <section class="section">
-        <h2>Total Sensitive Files</h2>
-        <p>Total Files: {{ total_hashes }}</p>
+    <!-- Registered Files Section -->
+    <section id="registered-files">
+      <div class="section-header">
+        <h2>Protected Files <span class="badge">{{ total_hashes }}</span></h2>
+        <div class="section-actions">
+          <button id="refresh-files">
+            <span class="btn-icon">🔄</span> Refresh
+          </button>
+        </div>
+      </div>
+      
+      <div class="table-container">
         <table>
-            <thead>
-                <tr>
-                    <th>File Name</th>
-                    <th>Hash Type</th>
-                    <th>Hash Value</th>
-                    <th>File Path</th>
-                    <th>Created At</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for hash in hashes %}
-                <tr>
-                    <td>{{ hash[3] }}</td>
-                    <td>{{ hash[2] }}</td>
-                    <td>{{ hash[1] }}</td>
-                    <td>{{ hash[4] }}</td>
-                    <td>{{ hash[5] }}</td>
-                    <td><a href="/delete/{{ hash[0] }}" class="delete-btn">Delete</a></td>
-                </tr>
-                {% endfor %}
-            </tbody>
+          <thead>
+            <tr>
+              <th>Filename</th>
+              <th>Type</th>
+              <th class="hash-column">Hash</th>
+              <th>Directory</th>
+              <th>Created</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for h in hashes %}
+            <tr>
+              <td>{{ h.filename }}</td>
+              <td>{{ h.hash_type }}</td>
+              <td class="hash-column">
+                <span class="hash-value" title="{{ h.hash_value }}">
+                  {{ h.hash_value[:8] }}...{{ h.hash_value[-8:] }}
+                </span>
+              </td>
+              <td>
+                {% if h.allowed_directory|length > 20 %}
+                  {{ h.allowed_directory[:20] }}...
+                {% else %}
+                  {{ h.allowed_directory }}
+                {% endif %}
+              </td>
+              <td>
+                {% if h.created_at %}
+                  {{ h.created_at.strftime('%Y-%m-%d %H:%M') }}
+                {% else %}
+                  Unknown
+                {% endif %}
+              </td>
+              <td>
+                <a href="{{ url_for('delete', id_=h.id) }}" class="delete-badge" onclick="return confirm('Are you sure you want to remove protection for this file?')">Remove</a>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="6" class="empty-table">No protected files yet. Upload your first file to get started.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
         </table>
+      </div>
     </section>
 
-    <!-- Live Alerts Section -->
-    <section id="alerts-section" class="section">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h2>Recent Alerts (Live)</h2>
-            <button id="clear-alerts-btn" class="danger-btn">Clear All Alerts</button>
+    <!-- Alerts Section -->
+    <section id="alerts-section">
+      <div class="section-header">
+        <h2>Security Alerts</h2>
+        <a href="/alerts" class="view-all-link">View All</a>
+      </div>
+      
+      <div id="alerts-container">
+        <div class="alert-placeholder">
+          <div class="placeholder-icon">🔔</div>
+          <p>Monitoring file system for security events...</p>
         </div>
-        <div id="alerts-scroll" class="alert-scroll">
-            <table id="alerts-table">
-                <thead>
-                    <tr><th>Alert Message</th></tr>
-                </thead>
-                <tbody id="alerts-body">
-                    <tr><td>Loading alerts...</td></tr>
-                </tbody>
-            </table>
-        </div>
+      </div>
     </section>
+  </main>
 
-</main>
+  <footer>
+    <p>DLP System v1.0 | Securing sensitive documents with {{ config.HASH_TYPE|upper }} hashing</p>
+    <p>Active monitoring: <span id="home-dir">{{ config.HOME_DIR }}</span></p>
+  </footer>
 
-<script>
-    async function fetchAlerts() {
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // File input handling
+      const fileInput = document.getElementById('file-input');
+      const fileNameDisplay = document.getElementById('file-name');
+      
+      fileInput.addEventListener('change', (e) => {
+        if (fileInput.files.length > 0) {
+          fileNameDisplay.textContent = fileInput.files[0].name;
+        } else {
+          fileNameDisplay.textContent = 'Choose a file...';
+        }
+      });
+
+      // Directory browser initialization
+      const browserEl = document.getElementById('dir-browser');
+      const selectedDisplay = document.getElementById('selected-display');
+      const selectedInput = document.getElementById('selected-directory-input');
+      const homeDir = "{{ config.HOME_DIR }}";
+
+      // Create directory item element
+      const makeItem = (name, path) => {
+        const item = document.createElement('div');
+        item.className = 'directory-item';
+        item.dataset.path = path;
+
+        const toggle = document.createElement('span');
+        toggle.className = 'directory-toggle';
+        toggle.textContent = '+';
+        toggle.dataset.path = path;
+
+        const label = document.createElement('span');
+        label.className = 'directory-name';
+        label.textContent = name;
+
+        item.append(toggle, label);
+        return item;
+      };
+
+      // Load directory children
+      async function loadChildren(path, container) {
         try {
-            const res = await fetch('/get_alerts');
-            const alerts = await res.json();
-            const body = document.getElementById('alerts-body');
-            body.innerHTML = "";
+          const res = await fetch(`/get_directory_children?path=${encodeURIComponent(path)}`);
+          const children = await res.json();
+          if (!children.length) return null;
 
-            if (alerts.length === 0) {
-                body.innerHTML = "<tr><td>No alerts yet.</td></tr>";
-            } else {
-                alerts.forEach(alert => {
-                    const row = document.createElement('tr');
-                    const cell = document.createElement('td');
-                    cell.textContent = alert;
-                    cell.style.whiteSpace = 'pre-wrap';
-                    row.appendChild(cell);
-                    body.appendChild(row);
-                });
-            }
-        } catch (err) {
-            console.error("Failed to load alerts:", err);
+          const wrapper = document.createElement('div');
+          wrapper.className = 'directory-children';
+          wrapper.dataset.parentPath = path;
+
+          for (const c of children) {
+            const childItem = makeItem(c.name, c.path);
+            wrapper.appendChild(childItem);
+          }
+          container.appendChild(wrapper);
+          return wrapper;
+        } catch (error) {
+          console.error('Error loading directory children:', error);
+          return null;
         }
-    }
+      }
 
-    document.getElementById("clear-alerts-btn").addEventListener("click", async () => {
-        const confirmClear = confirm("Are you sure you want to clear all alerts?");
-        if (!confirmClear) return;
-
-        const res = await fetch('/clear_alerts', { method: 'POST' });
-        const json = await res.json();
-        if (json.status === "cleared") {
-            fetchAlerts();
+      // Handle directory browser interactions
+      browserEl.addEventListener('click', async (e) => {
+        const toggle = e.target.closest('.directory-toggle');
+        const item = e.target.closest('.directory-item');
+        
+        if (toggle) {
+          const path = toggle.dataset.path;
+          let childrenContainer = browserEl.querySelector(`.directory-children[data-parent-path="${path}"]`);
+          
+          if (childrenContainer) {
+            const isHidden = childrenContainer.style.display === 'none';
+            childrenContainer.style.display = isHidden ? 'block' : 'none';
+            toggle.textContent = isHidden ? '-' : '+';
+          } else {
+            toggle.textContent = '-';
+            await loadChildren(path, item);
+          }
         }
+        
+        if (item) {
+          browserEl.querySelectorAll('.directory-item').forEach(el => el.classList.remove('selected'));
+          item.classList.add('selected');
+          const path = item.dataset.path;
+          selectedDisplay.textContent = path;
+          selectedInput.value = path;
+        }
+      });
+
+      // Initialize directory browser
+      browserEl.appendChild(makeItem("Home Directory", homeDir));
+      browserEl.querySelector('.directory-item').click();
+
+      // SSE for live alerts
+      const alertsContainer = document.getElementById('alerts-container');
+      const evtSource = new EventSource("{{ url_for('stream_alerts') }}");
+      
+      evtSource.onmessage = (e) => {
+        try {
+          // Remove placeholder if it exists
+          const placeholder = document.querySelector('.alert-placeholder');
+          if (placeholder) placeholder.remove();
+          
+          // Create alert element
+          const alertItem = document.createElement('div');
+          alertItem.className = 'alert-item';
+          
+          // Extract timestamp and message
+          const now = new Date();
+          const timestamp = now.toLocaleString();
+          const message = e.data;
+          
+          // Create timestamp element
+          const timestampEl = document.createElement('div');
+          timestampEl.className = 'alert-timestamp';
+          timestampEl.textContent = timestamp;
+          
+          // Create message element
+          const messageEl = document.createElement('div');
+          messageEl.className = 'alert-message';
+          messageEl.textContent = message;
+          
+          // Assemble alert
+          alertItem.appendChild(timestampEl);
+          alertItem.appendChild(messageEl);
+          
+          // Add to top of container
+          alertsContainer.insertBefore(alertItem, alertsContainer.firstChild);
+          
+          // Auto-scroll to new alerts
+          alertsContainer.scrollTop = 0;
+          
+          // Keep only last 8 alerts visible
+          if (alertsContainer.children.length > 8) {
+            alertsContainer.removeChild(alertsContainer.lastChild);
+          }
+        } catch (error) {
+          console.error('Error processing alert:', error);
+        }
+      };
+
+      evtSource.onerror = () => {
+        console.log('SSE connection error - attempting to reconnect...');
+        setTimeout(() => {
+          evtSource.close();
+          new EventSource("{{ url_for('stream_alerts') }}");
+        }, 3000);
+      };
+
+      // Load recent alerts on page load
+      async function loadRecentAlerts() {
+        try {
+          const response = await fetch('/get_alerts');
+          const alerts = await response.json();
+          
+          // Remove placeholder if alerts exist
+          if (alerts.length > 0) {
+            const placeholder = document.querySelector('.alert-placeholder');
+            if (placeholder) placeholder.remove();
+          }
+          
+          // Process and display recent alerts
+          alerts.slice(0, 5).forEach(alert => {
+            const alertItem = document.createElement('div');
+            alertItem.className = 'alert-item';
+            
+            // Try to parse timestamp from alert message
+            const timestampMatch = alert.match(/\[(.*?)\]/);
+            const timestamp = timestampMatch ? timestampMatch[1] : new Date().toLocaleString();
+            const message = timestampMatch ? alert.replace(timestampMatch[0], '').trim() : alert;
+            
+            const timestampEl = document.createElement('div');
+            timestampEl.className = 'alert-timestamp';
+            timestampEl.textContent = timestamp;
+            
+            const messageEl = document.createElement('div');
+            messageEl.className = 'alert-message';
+            messageEl.textContent = message;
+            
+            alertItem.appendChild(timestampEl);
+            alertItem.appendChild(messageEl);
+            alertsContainer.appendChild(alertItem);
+          });
+        } catch (error) {
+          console.error('Failed to load recent alerts:', error);
+        }
+      }
+      
+      // Load recent alerts on initial page load
+      loadRecentAlerts();
+      
+      // Refresh files button
+      document.getElementById('refresh-files').addEventListener('click', () => {
+        window.location.reload();
+      });
+      
+      // Form submission loading indicator
+      document.getElementById('upload-form').addEventListener('submit', () => {
+        const btn = document.getElementById('upload-btn');
+        btn.innerHTML = '<span class="btn-icon">⏳</span> Securing File...';
+        btn.disabled = true;
+      });
     });
-
-    fetchAlerts();
-    setInterval(fetchAlerts, 5000);
-</script>
+  </script>
 </body>
 </html>

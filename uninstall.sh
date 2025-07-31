@@ -6,21 +6,21 @@ IFS=$'\n\t'
 PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PARENT_DIR="$(dirname "$PROJECT_DIR")"
 PROJECT_NAME="$(basename "$PROJECT_DIR")"
-VENV_DIR="$PROJECT_DIR/hdlp-venv"
+VENV_DIR="$PROJECT_DIR/dlp-venv"
 LOG_DIR="$PROJECT_DIR/logs"
 DB_FILE="$PROJECT_DIR/hash_store.db"
 
 # If you pass -y or --yes, skip the final confirmation
 FORCE=false
-if [[ "${1-}" =~ ^(-y|--yes)$ ]]; then
+if [[ "${1-:-}" =~ ^(-y|--yes)$ ]]; then
   FORCE=true
 fi
 
-echo "=== HDLP-Tool Uninstall ==="
+echo "=== DLP-Tool Uninstall ==="
 echo
 
 # 1) Stop services (no prompt)
-PIDS=$(pgrep -f "python3 main\.py|python3 watch_alerts\.py" || true)
+PIDS=$(pgrep -f "python3 app\.py|python3 watcher\.py" || true)
 if [[ -n "$PIDS" ]]; then
   echo "[*] Stopping running services: $PIDS"
   kill $PIDS
@@ -30,17 +30,31 @@ else
 fi
 
 # 2) Remove venv, logs, DB (no prompts)
-rm -rf "$VENV_DIR" && echo "[✔] Virtualenv removed." || echo "[✔] No virtualenv to remove."
-rm -rf "$LOG_DIR" && echo "[✔] Logs directory removed." || echo "[✔] No logs directory to remove."
-rm -f "$DB_FILE" && echo "[✔] Database file removed." || echo "[✔] No database file to remove."
+if rm -rf "$VENV_DIR"; then
+  echo "[✔] Virtualenv removed."
+else
+  echo "[✔] No virtualenv to remove."
+fi
 
-# 3) Verify we’re really in the right folder
+if rm -rf "$LOG_DIR"; then
+  echo "[✔] Logs directory removed."
+else
+  echo "[✔] No logs directory to remove."
+fi
+
+if rm -f "$DB_FILE"; then
+  echo "[✔] Database file removed."
+else
+  echo "[✔] No database file to remove."
+fi
+
+# 3) Verify we’re in the right folder
 echo
 echo "[*] Verifying project directory contents..."
-for marker in start_services.sh setup_env.sh main.py watch_alerts.py requirements.txt; do
+for marker in start_services.sh setup_env.sh app.py watcher.py requirements.txt; do
   if [[ ! -e "$PROJECT_DIR/$marker" ]]; then
     echo "[ERROR] Missing expected file: $marker"
-    echo "        This doesn’t look like the HDLP project root. Aborting."
+    echo "        This doesn’t look like the DLP project root. Aborting."
     exit 1
   fi
 done

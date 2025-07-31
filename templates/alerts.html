@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Security Alerts | DLP System</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+  <header>
+    <h1>Security Alerts</h1>
+    <p>Data Leak Prevention System</p>
+  </header>
+  
+  <nav>
+    <ul>
+      <li><a href="/">Dashboard</a></li>
+      <li><a class="active" href="/protected_files">Protected Files</a></li>
+      <li><a class="active" href="/alerts">Alerts</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <section>
+      <div class="section-header">
+        <h2>Security Event History</h2>
+        <button id="clear-alerts">Clear All Alerts</button>
+      </div>
+      
+      {% if alerts %}
+        <div class="alerts-history">
+          {% for alert in alerts %}
+            <div class="alert-item">
+              <div class="alert-timestamp">
+                {{ alert.split(']')[0]|replace('[', '') }}
+              </div>
+              <div class="alert-message">
+                {{ alert.split(']')[1] }}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-icon">🛡️</div>
+          <h3>No Security Alerts</h3>
+          <p>No security events have been detected yet.</p>
+          <p>All files are in their designated secure locations.</p>
+        </div>
+      {% endif %}
+    </section>
+  </main>
+
+  <script>
+    document.getElementById('clear-alerts').addEventListener('click', async () => {
+      if (confirm('Are you sure you want to clear all alert history?')) {
+        const response = await fetch('/clear_alerts', { method: 'POST' });
+        if (response.ok) {
+          window.location.reload();
+        }
+      }
+    });
+  </script>
+</body>
+</html>
