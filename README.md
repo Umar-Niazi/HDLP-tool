@@ -110,7 +110,9 @@ HDLP/
 ├── static/
 │   └── styles.css        # Frontend styles
 └── templates/
-    └── dashboard.html    # Flask dashboard template
+    └── dashboard.html   
+    └── alerts.html    
+    └── protected_files.html    
 ```
 
 ## License
